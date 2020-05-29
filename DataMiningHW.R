@@ -64,20 +64,17 @@ house=house[,variable.list]
 trainset=trainset[,variable.list]
 testset=testset[,variable.list]
 
-
-str(house)
-
 control=trainControl(method="cv", number=10,summaryFunction = multiClassSummary,classProbs=T)
 #control=trainControl(method="repeatedcv", number=10,summaryFunction = multiClassSummary,classProbs=T)
-house.rp =train(danger~., data=trainset, method="rpart",metric='F1', trControl=control)
-
+model =train(danger~., data=trainset, method="rpart",metric='F1', trControl=control)
+con=rpart.control(minsplit=20, cp=0.01)
+house.rp =rpart(danger~., data=trainset, control=con)
 
 
 
 
 # (10)請利用plot()和text()畫出house.rp模型的決策樹
-con=rpart.control(minsplit=20, cp=0.01)
-house.rp =rpart(danger~., data=trainset, control=con)
+
 plot(house.rp, uniform=TRUE, compress=TRUE, margin=0.02)
 text(house.rp, cex=0.5)
 
@@ -93,7 +90,7 @@ s$cptable
 
 
 # (12)請將測試集資料(testset)放入模型中進行驗證，請問此模型的accuracy, precision, recall等績效分別為何?
-predictions = predict(house.rp,testset,type='raw')
+predictions = predict(model, testset, type='raw')
 table(predictions,testset$danger)
 confusionMatrix(table(predictions,testset$danger))
 
@@ -102,7 +99,7 @@ confusionMatrix(table(predictions,testset$danger))
  
 #   (13)請繪製出此模型的ROC曲線，並計算其AUC
 
-library('caret')
+#library('caret')
 #importance = varImp(house.rp, scale=T)
 #importance
 #plot(importance)
