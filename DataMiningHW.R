@@ -36,7 +36,6 @@ house=house%>%mutate(building_age=as.integer(round((Sys.Date()-house$finish_ymd)
 # (7)請讀取final資料夾下的house_danger檔案，並將house資料集和house_danger資料集以left outer join方式join起來，存回house變數中
 danger <- read_csv("d://R/riii/hw/house_danger.csv")
 
-str(danger)
 
 names(house)[2]=names(danger)[2]
 
@@ -45,6 +44,8 @@ house=house %>% merge(danger, by = "ID", all.x = TRUE)
 
 
 # (8)請將house資料以8:2的比例分為訓練集和測試集，將訓練集資料存在trainset變數中，將測試集資料存在testset變數中。
+
+set.seed(2)
 ind<-sample(1:2, size=nrow(house), replace=T, prob=c(0.8, 0.2))
 trainset=house[ind==1,]
 testset=house[ind==2,]
@@ -62,53 +63,56 @@ variable.list = names(house) %in% c('area','building_age','building_sqmeter', 'b
 house=house[,variable.list]
 trainset=trainset[,variable.list]
 testset=testset[,variable.list]
+
+
+str(house)
+
 control=trainControl(method="cv", number=10,summaryFunction = multiClassSummary,classProbs=T)
 #control=trainControl(method="repeatedcv", number=10,summaryFunction = multiClassSummary,classProbs=T)
-
-
 house.rp =train(danger~., data=trainset, method="rpart",metric='F1', trControl=control)
 
+
+
+
+
+# (10)請利用plot()和text()畫出house.rp模型的決策樹
+con=rpart.control(minsplit=20, cp=0.01)
+house.rp =rpart(danger~., data=trainset, control=con)
+plot(house.rp, uniform=TRUE, compress=TRUE, margin=0.02)
+text(house.rp, cex=0.5)
+
+
+# (11)請問此決策數是否需要進行剪枝(prune)？如需剪枝請將修剪後的模型存回house.rp中。
+
+s=summary(house.rp)
+s$cptable
+
+
+
+# (12)請將測試集資料(testset)放入模型中進行驗證，請問此模型的accuracy, precision, recall等績效分別為何?
 predictions = predict(house.rp,testset,type='raw')
 table(predictions,testset$danger)
 confusionMatrix(table(predictions,testset$danger))
 
 
 
-# (10)請利用plot()和text()畫出house.rp模型的決策樹
-library('rpart.plot')
-plot(house.rp, uniform=TRUE, compress=TRUE, margin=0.02)
-
-rpart.plot(house.rp)
-
-
-# (11)請問此決策數是否需要進行剪枝(prune)？如需剪枝請將修剪後的模型存回house.rp中。
-s=summary(house.rp)
-s$cptable
-
-
-
-
-# (12)請將測試集資料(testset)放入模型中進行驗證，請問此模型的accuracy, precision, recall等績效分別為何?
  
 #   (13)請繪製出此模型的ROC曲線，並計算其AUC
 
+library('caret')
+importance = varImp(house.rp, scale=T)
+importance
+plot(importance)
 
-
-
-predictions = predict(model,testset,type='raw')
-table(predictions,testset$churn)
-confusionMatrix(table(predictions,testset$churn))
 
 library(ROCR)
-pred <-predict(model, testset, type="prob")
-p_yes<-pred[, "yes"]
-predictions<-prediction(p_yes, testset$churn)
+pred <-predict(house.rp, testset, type="prob")
+p_yes<-pred[, "YES"]
+predictions<-prediction(p_yes, testset$danger)
 per_auc<-performance(predictions, measure ="auc")
 per_fpr_tpr<-performance(predictions, measure="tpr",x.measure = "fpr")
 plot(per_fpr_tpr,main=paste("AUC:",(per_auc@y.values)))
-  
-  
-  
+
   
   
   
