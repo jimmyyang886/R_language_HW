@@ -88,6 +88,9 @@ s=summary(house.rp)
 s$cptable
 
 
+#不需要剪枝，xerror 隨nsplit增加還能降低
+
+
 
 # (12)請將測試集資料(testset)放入模型中進行驗證，請問此模型的accuracy, precision, recall等績效分別為何?
 predictions = predict(house.rp,testset,type='raw')
@@ -100,9 +103,9 @@ confusionMatrix(table(predictions,testset$danger))
 #   (13)請繪製出此模型的ROC曲線，並計算其AUC
 
 library('caret')
-importance = varImp(house.rp, scale=T)
-importance
-plot(importance)
+#importance = varImp(house.rp, scale=T)
+#importance
+#plot(importance)
 
 
 library(ROCR)
